@@ -1,6 +1,8 @@
 
 from shadow_remover import process_image_file
 
+# this function is called when shadow remover
+# is run with test image argument 'i'
 if __name__ == "__main__":
     import argparse
 
@@ -19,4 +21,6 @@ if __name__ == "__main__":
                         default=False, nargs='?')
     args = parser.parse_args()
 
+    # method calls function process_image_file 
+    # from shadow_remover.py
     process_image_file(*vars(args).values())

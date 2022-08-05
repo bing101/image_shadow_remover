@@ -145,14 +145,43 @@ def process_regions(org_image: np.ndarray,
                     shadow_dilation_iteration: int,
                     shadow_size_threshold: int,
                     verbose: bool) -> np.ndarray:
+
+    """
+    The function cvtColor() converts an input image from one color space to another. 
+    In case of a transformation to-from RGB color space, the order of the 
+    channels should be specified explicitly (RGB or BGR). Note that the 
+    default color format in OpenCV is often referred to as RGB but it is 
+    actually BGR (the bytes are reversed). So the first byte in a standard (24-bit) 
+    color image will be an 8-bit Blue component, the second byte will be Green, 
+    and the third byte will be Red. The fourth, fifth, and sixth bytes would then
+     be the second pixel (Blue, then Green, then Red), and so on.
+
+     we're passing the image matrix to this method to apply the BGR3LAB transfomration
+    """
     lab_img = cv.cvtColor(org_image, cv.COLOR_BGR2LAB)
+
+    """
+    Return an array copy of the given image object.
+
+    """
     shadow_clear_img = np.copy(org_image)  # Used for constructing corrected image
 
     # We need connected components
     # Initialize the labels of the blobs in our binary image
     labels = measure.label(mask)
 
+    """
+        non_shadow_kernel_size is declared as tuple of two val 
+    """
     non_shadow_kernel_size = (shadow_dilation_kernel_size, shadow_dilation_kernel_size)
+
+    """
+    cv.getStructuringELement
+    Returns a structuring element of the specified size and shape for morphological operations.
+
+    The function constructs and returns the structuring element that can be further passed
+    to #erode, #dilate or #morphologyEx. But you can also construct an arbitrary binary mask yourself and use it as the structuring element.
+    """
     non_shadow_kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, non_shadow_kernel_size)
 
     CHANNEL_MAX = 255
@@ -200,6 +229,17 @@ def process_regions(org_image: np.ndarray,
 
 def calculate_mask(org_image: np.ndarray,
                    region_adjustment_kernel_size: int) -> np.ndarray:
+
+    """
+    The function cvtColor converts an input image from one color space to another. 
+    In case of a transformation to-from RGB color space, the order of the
+     channels should be specified explicitly (RGB or BGR). Note that the 
+     default color format in OpenCV is often referred to as RGB but it is 
+     actually BGR (the bytes are reversed). So the first byte in a standard
+      (24-bit) color image will be an 8-bit Blue component, the second byte 
+      will be Green, and the third byte will be Red. The fourth, fifth, and 
+      sixth bytes would then be the second pixel (Blue, then Green, then Red), and so on.
+    """
     lab_img = cv.cvtColor(org_image, cv.COLOR_BGR2LAB)
 
     # Calculate the mean values of A and B across all pixels
@@ -210,13 +250,36 @@ def calculate_mask(org_image: np.ndarray,
     channel_max = 256
 
     # Apply threshold using only L
+    """
+        value to mask (which is returned by function) is assigned 
+        here. 
+        The method cv.inRange Checks if array elements lie between the elements 
+        of two other arrays. The function checks the range as follows:
+        For every element of a single-channel input array: 
+        That is, dst (I) is set to 255 (all 1 -bits) if src (I) is within the specified 1D, 2D, 3D, ... box and 0 otherwise.
+        When the lower and/or upper boundary parameters are scalars, 
+        the indexes (I) at lowerb and upperb in the above formulas should be omitted.
+    """
     if sum(means[1:]) <= channel_max:
         mask = cv.inRange(lab_img, (0, 0, 0), (thresholds[0], channel_max, channel_max))
     else:  # Else, also consider B channel
         mask = cv.inRange(lab_img, (0, 0, 0), (thresholds[0], channel_max, thresholds[2]))
 
+
+    """
+        kernel_size is declared as a tuple (an immutable array of sorts) with 
+        two values region_adjustment_kernel_size, region_adjustment_kernel_size
+    """
     kernel_size = (region_adjustment_kernel_size, region_adjustment_kernel_size)
     kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, kernel_size)
+
+    """
+        The function morphologyEx can perform advanced morphological transformations 
+        using an erosion and dilation as basic operations.
+        Any of the operations can be done in-place. In case of multi-channel images,
+         each channel is processed independently.
+         I myself don't understand much what this does you can google it
+    """
     cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel, mask)
     cv.morphologyEx(mask, cv.MORPH_OPEN, kernel, mask)
 
@@ -230,8 +293,22 @@ def remove_shadows(org_image: np.ndarray,
                    shadow_dilation_kernel_size: int,
                    shadow_size_threshold: int,
                    verbose: bool) -> Tuple[np.ndarray, np.ndarray]:
+    """
+        calls calculate_mask function and passes the org_img (the image matrix)
+        region_adjustment_kernel_size value is 10
+        value of mask is set from the return of calculate_mask() method
+    """
     mask = calculate_mask(org_image, region_adjustment_kernel_size)
 
+    """
+    calls process_region method and passes image_matrix and the calculated mask.
+    Rest of the method argumets are: 
+                       lab_adjustment=False,
+                       region_adjustment_kernel_size=10,
+                       shadow_dilation_kernel_size=5,
+                       shadow_dilation_iteration=3,
+                       shadow_size_threshold=2500,
+    """
     shadow_clear_img = process_regions(org_image,
                                        mask,
                                        lab_adjustment,
@@ -253,9 +330,13 @@ def process_image_file(img_name,
                        shadow_dilation_iteration=3,
                        shadow_size_threshold=2500,
                        verbose=False) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    # cv2.imread() method loads an image from the specified file.
+    # returns matrix (2d array) representation of image
     org_image = cv.imread(img_name)
     print("Read the image {}".format(img_name))
-
+    """
+        the image loaded is passed to remove_shadows method
+    """
     shadow_clear, mask = remove_shadows(org_image,
                                         lab_adjustment,
                                         region_adjustment_kernel_size,

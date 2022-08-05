@@ -1,0 +1,23 @@
+Shadow remover Commands flow: 
+
+function call
+
+1) shadow_remover_test.py
+	- line 26 calls function process_image_file() from the file shadow_remover.py 
+2) shadow_remover/shadow_remover.py
+	- 			process_image_file('/../image_path.png',
+						NOTE: the ones below are default arguments passed to function
+					   save=False,
+                       lab_adjustment=False,
+                       region_adjustment_kernel_size=10,
+                       shadow_dilation_kernel_size=5,
+                       shadow_dilation_iteration=3,
+                       shadow_size_threshold=2500,
+                       verbose=False)
+					
+					- remove_shadows():
+						- calculate_maks():
+					- process_regions()
+	
+	
+	
